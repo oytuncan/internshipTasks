@@ -1,0 +1,33 @@
+---
+- name: K3s Kubernetes Kurulumu
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Gerekli temel paketleri kur
+      apt:
+        name: curl
+        state: present
+        update_cache: yes
+
+    - name: K3s kurulum scriptini indir ve calistir
+      shell: curl -sfL https://get.k3s.io | sh -
+      args:
+        creates: /usr/local/bin/k3s
+
+    - name: Vagrant kullanicisi icin .kube klasoru olustur
+      file:
+        path: /home/vagrant/.kube
+        state: directory
+        owner: vagrant
+        group: vagrant
+        mode: '0755'
+
+    - name: Kubeconfig dosyasini kopyala ve yetkilendir
+      copy:
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: /home/vagrant/.kube/config
+        remote_src: yes
+        owner: vagrant
+        group: vagrant
+        mode: '0600'
