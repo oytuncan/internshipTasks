@@ -1,0 +1,2 @@
+# internshipTasks
+staj süresince yapılanlar
