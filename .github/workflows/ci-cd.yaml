@@ -24,13 +24,32 @@ jobs:
         run: |
           echo "IMAGE_TAG=sha-${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-      - name: Build Docker Image
+      - name: Configure Harbor Credentials
         run: |
-          docker build -t harbor.local/wordpress/my-wordpress:${{ env.IMAGE_TAG }} .
+          mkdir -p ~/.docker
+          AUTH_BASE64=$(echo -n "admin:Harbor12345" | base64)
+          cat <<EOF > ~/.docker/config.json
+          {
+            "auths": {
+              "harbor.local": {
+                "auth": "$AUTH_BASE64"
+              }
+            }
+          }
+          EOF
 
-      - name: Push Docker Image to Harbor
+      - name: Set up Docker Buildx with Insecure Registry
         run: |
-          docker push harbor.local/wordpress/my-wordpress:${{ env.IMAGE_TAG }}
+          cat <<'EOF' > /tmp/buildkitd.toml
+          [registry."harbor.local"]
+            http = true
+            insecure = true
+          EOF
+          docker buildx create --use --name gitops-builder --config /tmp/buildkitd.toml || docker buildx use gitops-builder
+
+      - name: Build and Push Docker Image to Harbor
+        run: |
+          docker buildx build --push -t harbor.local/wordpress/my-wordpress:${{ env.IMAGE_TAG }} .
 
       - name: Update Helm values.yaml with New Image Tag
         run: |
