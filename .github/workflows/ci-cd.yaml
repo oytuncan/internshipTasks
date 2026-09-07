@@ -24,6 +24,12 @@ jobs:
         run: |
           echo "IMAGE_TAG=sha-${GITHUB_SHA::7}" >> $GITHUB_ENV
 
+      - name: Configure Harbor Docker Credentials
+        run: |
+          mkdir -p ~/.docker
+          AUTH_B64=$(echo -n "admin:Harbor12345" | base64 | tr -d '\n')
+          echo "{\"auths\":{\"harbor.local\":{\"auth\":\"$AUTH_B64\"}}}" > ~/.docker/config.json
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
@@ -31,13 +37,6 @@ jobs:
             [registry."harbor.local"]
               http = true
               insecure = true
-
-      - name: Log in to Harbor Registry
-        uses: docker/login-action@v3
-        with:
-          registry: harbor.local
-          username: admin
-          password: Harbor12345
 
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
