@@ -1,0 +1,45 @@
+name: Build, Push to Harbor and Update GitOps
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'helm/**'
+      - 'README.md'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set Short SHA as Image Tag
+        run: |
+          echo "IMAGE_TAG=sha-${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: Build Docker Image
+        run: |
+          docker build -t harbor.local/wordpress/my-wordpress:${{ env.IMAGE_TAG }} .
+
+      - name: Push Docker Image to Harbor
+        run: |
+          docker push harbor.local/wordpress/my-wordpress:${{ env.IMAGE_TAG }}
+
+      - name: Update Helm values.yaml with New Image Tag
+        run: |
+          sed -i 's|tag:.*|tag: '"${{ env.IMAGE_TAG }}"'|g' helm/values.yaml
+
+      - name: Commit and Push Updated Manifest
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add helm/values.yaml
+          git commit -m "chore(gitops): update image tag to ${{ env.IMAGE_TAG }} [skip ci]" || echo "No changes"
+          git push origin main
