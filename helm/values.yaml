@@ -1,0 +1,22 @@
+wordpress:
+  image:
+    registry: harbor.local
+    repository: wordpress/my-wordpress
+    tag: latest
+    pullPolicy: Always
+
+  service:
+    type: ClusterIP
+
+  existingSecret: wp-db-secret
+  wordpressUsername: admin
+  wordpressSecretKey: wordpress-password
+
+  mariadb:
+    enabled: true
+    auth:
+      database: bitnami_wordpress
+      username: bn_wordpress
+      existingSecret: wp-db-secret
+      passwordSecretKey: mariadb-password
+      rootPasswordSecretKey: mariadb-root-password
