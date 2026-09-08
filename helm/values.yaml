@@ -6,7 +6,7 @@ wordpress:
   image:
     registry: harbor.local
     repository: wordpress/my-wordpress
-    tag: latest
+    tag: sha-438aa85
     pullPolicy: Always
 
   service:
