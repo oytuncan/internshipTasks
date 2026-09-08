@@ -26,7 +26,7 @@ jobs:
 
       - name: Log in to Harbor
         run: |
-          echo "Harbor12345" | docker login harbor.local -u admin --password-stdin
+          echo "HarborGucluSifre123!" | docker login harbor.local -u admin --password-stdin
 
       - name: Build and Push Docker Image
         run: |
